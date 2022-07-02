@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 module.exports = mongoose.model("PlayList", new mongoose.Schema({
-   
+    playlistName:{
+        type:String,
+        required:true
+    },
     songImage:{
         type:String
     },
@@ -12,8 +15,9 @@ module.exports = mongoose.model("PlayList", new mongoose.Schema({
         type:Date,
         default:Date.now
     },
-    userId:[{
+    userId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'User'
-    }]
+    }
+    
 }));

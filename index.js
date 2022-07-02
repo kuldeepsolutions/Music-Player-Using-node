@@ -12,7 +12,7 @@ mongoose.connect(process.env.DB_CONNECTION,()=>{
 
 // middleware
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.urlencoded({extended:true,parameterLimit:1000000,limit:"500mb"}));
 const router = require('./routes/router');
 app.use('/',router);
 
