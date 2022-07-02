@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const bodyParser = require('body-parser');
 
-
+router.use(bodyParser.json());
+router.use(bodyParser.urlencoded({extended:true,parameterLimit:10000000,limit:"1gb"}));
 const user = require('../Controllers/UserController');
 const playlist = require('../Controllers/PlayListController');
 const song = require('../Controllers/SongController');
@@ -22,7 +23,8 @@ router.post('/users/delete',user.deleteUser);
 
 
 // for Playlists
-router.post('/createPlaylist',playlist.createPlaylist);
+router.get('/:email',playlist.displayPlaylist);
+router.post('/createPlaylist/:email&:playlistName',playlist.createPlaylist);
 router.post('/updatePlaylist',playlist.updatePlayList);
 router.post('/deletePlaylist',playlist.removePlaylist);
 

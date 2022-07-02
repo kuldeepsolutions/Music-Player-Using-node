@@ -97,3 +97,17 @@ var upload = multer({ storage: storage });
             res.send({ message: error });
         }
     }
+
+    exports.findSongByName = async (songName) => {
+        try {
+            const song = await SongModel.findOne({ title: songName });
+            if (!song) {
+               console.log("Song does not exist");
+            }
+            else {
+                return song;
+            }
+        } catch (error) {
+            console.log("Error in finding song by name");
+        }
+    }
