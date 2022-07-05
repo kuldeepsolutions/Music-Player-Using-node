@@ -1,24 +1,43 @@
 const PlayListModel = require('../models/PlayListModel');
 const UserController = require('../Controllers/UserController');
 const SongModel = require('../models/SongModel');
-// const SongController = require('../Controllers/SongController');
+const SongController = require('../Controllers/SongController');
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const multer =  require('multer');
-// const fileUpload = require('express-fileupload');
-// express.Router().use(fileUpload())
 express.Router().use(bodyParser.json());
-express.Router().use(bodyParser.urlencoded({extended:true,parameterLimit:1000000,limit:"1gb"}));
+express.Router().use(bodyParser.urlencoded({extended:true,parameterLimit:1000000,limit:"100mb"}));
+var count = 0;
+
+
+
+const checkPlayList = async (playlistName)=>{
+    try {
+        let playlist = await PlayListModel.find({playlistName:playlistName});
+        if(!playlist){
+            return "playlist does not exist";
+        }
+        else{
+            return playlist;
+        }
+    } catch (error) {
+        return error;
+    }
+
+}
 
 exports.createPlaylist = async (req, res) => {
     const userEmail = req.params.email;
-    console.log(userEmail);
-    const user = await UserController.findUserByEmail(userEmail);
-    const userId = user._id;
     const playlistName = req.params.playlistName;
-    console.log(userId);
-    console.log(playlistName);
+    console.log(userEmail);
+    const user = await UserController.findUserByEmail(userEmail.toString());
+    const userId = user._id;
+    // console.log(userId);
+    // console.log(playlistName);
+    // const checkPlaylist = await checkPlayList(playlistName);
+    // console.log(checkPlaylist.playlistName);
+
 
     var storage = multer.diskStorage({destination:function(req,file,cb){
         cb(null,'./images/')
@@ -28,8 +47,10 @@ exports.createPlaylist = async (req, res) => {
     console.log(user);
     var upload = multer({storage:storage})
     try {
+        
         const uploadFile = upload.single('image');
         uploadFile(req, res, async (err) => {
+            console.log(req.file);
             if (err) {
                 return res.status(500).send(err);
             }
@@ -98,21 +119,23 @@ exports.updatePlayList = async (req,res)=>{
 
 exports.removePlaylist = async (req,res)=>{
     try {
-        const playlistId = req.body.playlistId;
-        if(!playlistId){
+        const Playlist = req.body.playlistId||req.body.playlist;
+        console.log(Playlist);
+        if(!Playlist){
             return res.status(400).send("Please enter your playlistId"+`Total Visits: ${count}`);
         }
         else{
-            const playlist = await PlayListModel.findOneAndDelete({_id:playlistId});
+            const playlist = await PlayListModel.findOneAndDelete({playlistName:Playlist});
             if(!playlist){
-                return res.status(400).send("Playlist does not exist"+`Total Visits: ${count}`);
+                return res.status(400).send("Playlist does not exist\n"+`Total Visits: ${count}`);
             }
             else{
-                return res.status(200).send("Playlist deleted successfully"+`Total Visits: ${count}`);
+                console.log(await checkPlayList(Playlist));
+                return res.status(200).send("Playlist deleted successfully\n"+`Total Visits: ${count}`);
             }
         }
     } catch (error) {
-        res.send({message:error});
+        res.send("Unable to delete PlayList : "+error);
     }
 };
 

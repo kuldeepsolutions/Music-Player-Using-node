@@ -198,7 +198,7 @@ var count =0;
     }
     exports.findUserByEmail = async (userEmail)=>{
         try {
-           
+           userEmail = userEmail.toString();
             if(!userEmail){
                 console.log("Please enter your email");
             }
