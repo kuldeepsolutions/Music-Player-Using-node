@@ -22,6 +22,14 @@ router.post('/users/update',user.updateUser);
 router.post('/users/delete',user.deleteUser);
 
 
+// for Songs
+
+router.get('/allSong',song.songs);
+router.post('/createSong',song.uploadSong);
+router.post('/updateSong',song.updateSong);
+router.post('/deleteSong',song.deleteSong);
+
+
 // for Playlists
 router.get('/:email',playlist.displayPlaylist);
 router.post('/createPlaylist/:email&:playlistName',playlist.createPlaylist);
@@ -29,12 +37,6 @@ router.post('/updatePlaylist',playlist.updatePlayList);
 router.post('/deletePlaylist',playlist.removePlaylist);
 
 
-// for Songs
-
-router.post('/createSong',song.uploadSong);
-router.post('/updateSong',song.updateSong);
-router.post('/deleteSong',song.deleteSong);
-router.get('/songs',song.songs)
 
 
 

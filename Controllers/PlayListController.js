@@ -1,7 +1,7 @@
 const PlayListModel = require('../models/PlayListModel');
 const UserController = require('../Controllers/UserController');
 const SongModel = require('../models/SongModel');
-const SongController = require('../Controllers/SongController');
+// const SongController = require('../Controllers/SongController');
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -9,7 +9,7 @@ const multer =  require('multer');
 // const fileUpload = require('express-fileupload');
 // express.Router().use(fileUpload())
 express.Router().use(bodyParser.json());
-express.Router().use(bodyParser.urlencoded({extended:true,parameterLimit:1000000,limit:"500mb"}));
+express.Router().use(bodyParser.urlencoded({extended:true,parameterLimit:1000000,limit:"1gb"}));
 
 exports.createPlaylist = async (req, res) => {
     const userEmail = req.params.email;
@@ -56,81 +56,83 @@ exports.createPlaylist = async (req, res) => {
         res.send({ message: error });
     }    
 
-}
-    exports.updatePlayList = async (req,res)=>{
-        try {
-            const email = req.body.email;
-            const songTitle = req.body.songTitle;
-            if(!email&&!songTitle){
-                return res.status(400).send("Please enter all the fields");
-            }
-            else{
-                // get User Details for confirmation
-                let userDetail =  await UserController.findUserByEmail(email);
-                let objectId = userDetail._id;
-                // get song data for song  confirmation
-                let song = await SongController.findSongByName(songTitle);
-                let songId = song._id;
-
-                // get playlist data for updating playlist
-                let playlist = await PlayListModel.find({userId:objectId});
-                for(let i=0;i<playlist.length;i++){
-                    let playlistId = playlist[i]._id;
-                    if(!playlist){
-                        return res.status(400).send("Please create a playlist first");
-
-                    }
-                    else{
-                        let update = await PlayListModel.findOneAndUpdate({_id:playlistId},{$push:{song:songId}});
-                        if(!update){
-                            return res.status(400).send("Failed to add song to playlist");
-                        }
-                        else{
-                            return res.status(200).send("Song added successfully");
-                        }
-                    } 
-            }                      
-            }
-        } catch (error) {
-            res.send("Unable to Update PlayList : "+error);
+};
+exports.updatePlayList = async (req,res)=>{
+    try {
+        const email = req.body.email;
+        const songTitle = req.body.songTitle;
+        if(!email&&!songTitle){
+            return res.status(400).send("Please enter all the fields");
         }
-    }
-    
-    exports.removePlaylist = async (req,res)=>{
-        try {
-            const playlistId = req.body.playlistId;
-            if(!playlistId){
-                return res.status(400).send("Please enter your playlistId"+`Total Visits: ${count}`);
-            }
-            else{
-                const playlist = await PlayListModel.findOneAndDelete({_id:playlistId});
+        else{
+            // get User Details for confirmation
+            let userDetail =  await UserController.findUserByEmail(email);
+            let objectId = userDetail._id;
+            // get song data for song  confirmation
+            let song = await SongController.findSongByName(songTitle);
+            let songId = song._id;
+
+            // get playlist data for updating playlist
+            let playlist = await PlayListModel.find({userId:objectId});
+            for(let i=0;i<playlist.length;i++){
+                let playlistId = playlist[i]._id;
                 if(!playlist){
-                    return res.status(400).send("Playlist does not exist"+`Total Visits: ${count}`);
+                    return res.status(400).send("Please create a playlist first");
+
                 }
                 else{
-                    return res.status(200).send("Playlist deleted successfully"+`Total Visits: ${count}`);
-                }
-            }
-        } catch (error) {
-            res.send({message:error});
+                    let update = await PlayListModel.findOneAndUpdate({_id:playlistId},{$push:{song:songId}});
+                    if(!update){
+                        return res.status(400).send("Failed to add song to playlist");
+                    }
+                    else{
+                        return res.status(200).send("Song added successfully");
+                    }
+                } 
+        }                      
         }
+    } catch (error) {
+        res.send("Unable to Update PlayList : "+error);
     }
+};
 
-    exports.displayPlaylist = async (req,res)=>{
-        try {
-            let userEmail = req.params.email;
-            let user = await UserController.findUserByEmail(userEmail);
-            let userId = user._id;
-            let playlist = await PlayListModel.find({userId:userId}).populate('song');
+exports.removePlaylist = async (req,res)=>{
+    try {
+        const playlistId = req.body.playlistId;
+        if(!playlistId){
+            return res.status(400).send("Please enter your playlistId"+`Total Visits: ${count}`);
+        }
+        else{
+            const playlist = await PlayListModel.findOneAndDelete({_id:playlistId});
             if(!playlist){
-                return res.status(400).send("No playlist found");
+                return res.status(400).send("Playlist does not exist"+`Total Visits: ${count}`);
             }
             else{
-                return res.status(200).send(playlist);
+                return res.status(200).send("Playlist deleted successfully"+`Total Visits: ${count}`);
             }
+        }
+    } catch (error) {
+        res.send({message:error});
+    }
+};
 
-        } catch (error) {
-            res.send("Unable to display PlayList : "+error);
+exports.displayPlaylist = async (req,res)=>{
+    try {
+        let userEmail = req.params.email;
+        
+        let user = await UserController.findUserByEmail(userEmail);
+        let userId = user._id;
+        
+        let playlist = await PlayListModel.find({userId:userId}).populate('song');
+        if(!playlist){
+            return res.status(400).send("No playlist found");
         }
-            
+        else{
+            return res.status(200).send(playlist);
         }
+
+    } catch (error) {
+        res.send("Unable to display PlayList : "+error);
+    }
+    
+};

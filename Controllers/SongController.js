@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const multer = require('multer');
 const SongModel = require("../models/SongModel");
 
-
+var count = 0;
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -17,97 +17,119 @@ var storage = multer.diskStorage({
 }
 );
 
-var upload = multer({ storage: storage });
-
-    exports.uploadSong = async (req, res) => {
-        const errhandler = async function (err,) {
-            if (err instanceof multer.MulterError) {
-                return res.status(500).send(err);
-            }
-            else if (err) {
+exports.uploadSong = async (req, res) => 
+{
+        var upload = multer({ storage: storage });
+        
+    try {
+        
+        const uploadFile = upload.single('song');
+        uploadFile(req, res, async (err) => {
+            if (err) {
                 return res.status(500).send(err);
             }
             else {
-                if (req.file !== "" && req.file.mimetype.includes('audio')) {
-                    let data = await SongModel.findOne({ title: req.file.originalname }, { _id: 0, __v: 0, songPath: 0, size: 0 })
-                    if (req.file.originalname == data) {
-
-                        return res.status(400).send("Song already exists");
-                    }
-                    else {
-                        const title = req.file.originalname;
-                        const size = (req.file.size / (1024 * 1024)).toPrecision(4);
-                        const duration = req.file.duration;
-                        const songPath = req.file.path;
-                        const song = new SongModel({
-                            title: title, size: size, duration: duration, songPath: songPath
-                        });
-                        song.save();
-                        return res.status(200).send("Song uploaded successfully");
-                    }
+                if (req.file == "" || req.file == undefined) {
+                    return res.status(400).send("Please upload a Song");
                 }
                 else {
-                    return res.status(400).send("Please upload a song");
+                    let data = await findSong(req.file.originalname.toString());
+                    if (!data) {
+                       const size = req.file.size;
+                       const newSize = Number(size / (1024*1024)).toFixed(2);
+                            const song = new SongModel({
+                                title: req.file.originalname.toString(),
+                                songPath: req.file.path.toString(),
+                                size:newSize
+                            });
+                            await song.save();
+                            return res.status(200).send("Song uploaded successfully");
+                        
+                    }
+                    else {
+                        console.log("Song already exists");
+                        return res.status(400).send("Song already exists");
+                    }
                 }
             }
         }
-        try {
-            const uploadFile = upload.single('song');
-            uploadFile(req, res, errhandler);
-        } catch (error) {
-            res.send({ message: error });
-        }
+        );
     }
-    exports.songs = async (req, res) => {
-        try {
-            const songs = await SongModel.find({}, { _id: 0, __v: 0, songPath: 0 });
-            res.json(songs);
-        } catch (error) {
-            res.send({ message: error });
-        }
+    catch (error) {
+        res.send({ message: error });
     }
-    exports.updateSong = async (req, res) => {
-        try {
-            const song = await SongModel.findOne({ song: req.params.song });
-            if (!song) {
-                return res.status(400).send("Song does not exist");
-            }
-            else {
-                song.title = req.body.name;
-                song.path = req.body.path;
-                song.user = req.body.user;
-                await song.save();
-                res.send("Song updated successfully");
-            }
-        } catch (error) {
-            res.send({ message: error });
-        }
-    }
-    exports.deleteSong = async (req, res) => {
-        try {
-            const song = await SongModel.findOne({ song: req.params.song });
-            if (!song) {
-                return res.status(400).send("Song does not exist");
-            }
-            else {
-                await song.remove();
-                res.send("Song deleted successfully");
-            }
-        } catch (error) {
-            res.send({ message: error });
-        }
-    }
+};
 
-    exports.findSongByName = async (songName) => {
-        try {
-            const song = await SongModel.findOne({ title: songName });
-            if (!song) {
-               console.log("Song does not exist");
-            }
-            else {
-                return song;
-            }
-        } catch (error) {
-            console.log("Error in finding song by name");
-        }
+const findSong = async (songName) => {
+    try {
+        count++;
+        const song = await SongModel.findOne({ title: songName });
+       if(!song){
+         console.log("Database Updated"); 
+       }else{
+            console.log(song.title,"\n",song.size);
+            return song;
+         }
     }
+    catch (error) {
+        return error;
+    }
+};
+exports.songs = async (req, res) => {
+    try {
+        count++;
+        console.log("trying to get all songs");
+        const songs = await SongModel.find({}, { _id: 0, __v: 0, songPath: 0 });
+        res.json(songs);
+    } catch (error) {
+        res.send("Error in finding songs"+error);
+    }
+};
+exports.updateSong = async (req, res) => {
+    try {
+        count++;
+        const song = await SongModel.findOne({ song: req.params.song });
+        if (!song) {
+            return res.status(400).send("Song does not exist");
+        }
+        else {
+            song.title = req.body.name;
+            song.path = req.body.path;
+            song.user = req.body.user;
+            await song.save();
+            res.send("Song updated successfully");
+        }
+    } catch (error) {
+        res.send({ message: error });
+    }
+};
+exports.deleteSong = async (req, res) => {
+    try {
+        count++;
+        const song = await SongModel.findOne({ song: req.params.song });
+        if (!song) {
+            return res.status(400).send("Song does not exist");
+        }
+        else {
+            await song.remove();
+            res.send("Song deleted successfully");
+        }
+    } catch (error) {
+        res.send({ message: error });
+    }
+};
+
+exports.findSongByName = async (songName) => {
+    try {
+        count++;
+        const song = await SongModel.findOne({ title: songName });
+        if (!song) {
+            console.log("Song does not exist");
+        }
+        else {
+            return song;
+        }
+    } catch (error) {
+        console.log("Error in finding song by name");
+    }
+};
