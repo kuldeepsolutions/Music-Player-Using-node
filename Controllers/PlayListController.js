@@ -188,3 +188,14 @@ exports.displayPlaylist = async (req,res)=>{
         res.send("Unable to display PlayList : "+error);
     }
 };
+// module.exports = checkPlayList;
+
+exports.getPlaylist = async (playlist)=>{
+    try {
+        let playlist1 = await PlayListModel.find({playlistName:playlist});
+        return playlist1;
+    } catch (error) {
+        console.log(error);
+    }
+
+}

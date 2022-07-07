@@ -15,9 +15,10 @@ const song = require('../Controllers/SongController');
 // for Users
 router.post('/users',user.searchUser);
 router.post('/createUser',user.createUser);
-router.post('/users/login',user.loginUser);
+// router.post('/users/login',user.loginUser);
 router.post('/users/update',user.updateUser);
 router.post('/users/delete',user.deleteUser);
+router.get('/users/getAll',user.getAllUsers);
 
 
 // for Songs

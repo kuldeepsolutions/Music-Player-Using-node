@@ -3,7 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const UserModel = require("../models/userModel");
-
+const PlayListController = require("./PlayListController");
 var count =0;
 exports.createUser = async (req,res)=>{
     try {
@@ -70,21 +70,20 @@ exports.searchUser = async (req,res)=>{
                 if(await UserModel.findOne({name:req.body.name})){                    
                     const data = await UserModel.findAll({name:req.body.name},{_id:0,__v:0,password:0});
                     res.json(data);
-                    // res.status(200).send("User exists");
                 }
                 else{
-                    return res.status(400).send("User does not exist"+`Total Visits: ${count}`);
+                    return res.status(400).send("User does not exist");
                 }
                 break;
                 case "email":
             const userEmail = req.body.email;
             if(!userEmail){
-                return res.status(400).send("Please enter your email"+`\nTotal Visits: ${count}`);
+                return res.status(400).send("Please enter your email");
             }
             else{
                 const user = await UserModel.findOne({email:userEmail},{_id:0,__v:0,password:0});
                 if(!user){
-                    return res.status(400).send("User does not exist")+`Total Visits: ${count}`;
+                    return res.status(400).send("User does not exist");
                 }
                 else{
                     return res.status(200).send(user);
@@ -92,9 +91,8 @@ exports.searchUser = async (req,res)=>{
             }
             break;
             default:
-                return res.status(400).send("Please enter a valid type"+` \nTotal Visits: ${count}`);
-    }
-
+                return res.status(400).send("Please enter a valid type");
+        }
     } catch (error) {
         res.send({message:error});
     }
@@ -106,53 +104,76 @@ exports.updateUser = async (req,res)=>{
             case "name":
                 const name = req.body.name;
                 if(!name){
-                    return res.status(400).send("Please enter your name"+`Total Visits: ${count}`);
+                    return res.status(400).send("Please enter your name");
                 }
                 else{
                     const user = await UserModel.findOneAndUpdate({email:req.body.email},{name:name});
                     if(!user){
-                        return res.status(400).send("User does not exist"+`Total Visits: ${count}`);
+                        return res.status(400).send("User does not exist");
                     }
                     else{
-                        return res.status(200).send("User updated successfully"+`Total Visits: ${count}`);
+                        return res.status(200).send("User updated successfully");
                     }
                 }
-                break;
-                case "email":
-            const userEmail = req.body.email;
-            if(!userEmail){
-                return res.status(400).send("Please enter your email"+`Total Visits: ${count}`);
-            }
-            else{
-                const user = await UserModel.findOneAndUpdate({email:userEmail},{email:userEmail});
-                if(!user){
-                    return res.status(400).send("User does not exist"+`Total Visits: ${count}`);
+            break;
+            case "email":
+                const oldUserEmail = req.body.email;
+                const newUserEmail = req.body.newEmail;
+                if(!userEmail){
+                    return res.status(400).send("Please enter your email");
                 }
                 else{
-                    return res.status(200).send("User updated successfully"+`Total Visits: ${count}`);
+                    const user = await UserModel.findOneAndUpdate({email:oldUserEmail},{email:newUserEmail});
+                    if(!user){
+                        return res.status(400).send("User does not exist");
+                    }
+                    else{
+                        return res.status(200).send("User updated successfully");
+                    }
                 }
-            }
             break;
             case "password":
-                const userPassword = req.body.password;
-                if(!userPassword){
-                    return res.status(400).send("Please enter your password"+`Total Visits: ${count}`);
-                }
-                else{
-                    const user = await UserModel.findOneAndUpdate({email:req.body.email},{password:userPassword});
-                    if(!user){
-                        return res.status(400).send("User does not exist"+`Total Visits: ${count}`);
+                    const userPassword = req.body.password;
+                    if(!userPassword){
+                        return res.status(400).send("Please enter your password");
                     }
+                    else{
+                        const user = await UserModel.findOneAndUpdate({email:req.body.email},{password:userPassword});
+                        if(!user){
+                            return res.status(400).send("User does not exist");
+                        }
                     else{
                         return res.status(200).send("User updated successfully"+`Total Visits: ${count}`);
                     }
                 }
+            break;
+            case "playlist":
+                const playlist = req.body.playlist;
+                if(!playlist){
+                    return res.status(400).send("Please enter your playlist");
+                }
+                else{
+                    let Playlist = await PlayListController.getPlaylist(playlist.toString());
+                    if(!Playlist){
+                        return res.status(400).send("Playlist does not exist");
+                    }
+                    else{                     
+                        let playlistId = Playlist[0]._id;
+                        const user = await UserModel.findOneAndUpdate({email:req.body.email},{PlayList:playlistId});
+                        if(!user){
+                            return res.status(400).send("User does not exist");
+                        }
+                        else{
+                            return res.status(200).send("User updated successfully");
+                        }
+                }
+            }
                 break;
             default:
                 return res.status(400).send("Please enter a valid type"+`Total Visits: ${count}`);
         }
     } catch (error) {
-        res.send({message:error});
+        res.send("Error: "+error);
     }
 };
 exports.deleteUser = async (req,res)=>{ 
@@ -171,12 +192,13 @@ exports.deleteUser = async (req,res)=>{
             }
         }
     } catch (error) {
-        res.send({message:error});
+        res.send("Error: "+error);
     }
-}  
+};  
 exports.getAllUsers = async (req,res)=>{
     try {
         const users = await UserModel.find({},{_id:0,__v:0,password:0});
+        console.log(users);
         if(!users){
             return res.status(400).send("No users found"+`Total Visits: ${count}`);
         }
@@ -186,7 +208,7 @@ exports.getAllUsers = async (req,res)=>{
     } catch (error) {
         res.send({message:error});
     }
-}
+};
 exports.findUserByEmail = async (userEmail)=>{
     try {
         userEmail = userEmail.toString();
@@ -205,4 +227,4 @@ exports.findUserByEmail = async (userEmail)=>{
     } catch (error) {
         console.log("Error: "+error);
     }
-}
+};
