@@ -4,15 +4,13 @@ const bodyParser = require('body-parser');
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({extended:true,parameterLimit:10000000,limit:"1gb"}));
+
+// Dependencies
+
 const user = require('../Controllers/UserController');
 const playlist = require('../Controllers/PlayListController');
 const song = require('../Controllers/SongController');
 
-
-// Objects
-
-
-// middlewares
 
 // for Users
 router.post('/users',user.searchUser);
@@ -23,9 +21,6 @@ router.post('/users/delete',user.deleteUser);
 
 
 // for Songs
-
-
-
 router.get('/allSong',song.songs);
 router.post('/createSong',song.uploadSong);
 router.post('/updateSong',song.updateSong);
@@ -38,8 +33,5 @@ router.post('/createPlaylist/:email&:playlistName',playlist.createPlaylist);
 router.post('/updatePlaylist',playlist.updatePlayList);
 router.post('/deletePlaylist',playlist.removePlaylist);
 
-
-
-
-
+// export the router to use in index.js
 module.exports = router;

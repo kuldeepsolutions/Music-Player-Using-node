@@ -3,13 +3,9 @@ const UserController = require('../Controllers/UserController');
 const SongModel = require('../models/SongModel');
 const SongController = require('../Controllers/SongController');
 
-
 const multer =  require('multer');
 
 var count = 0;
-
-
-
 const checkPlayList = async (playlistName)=>{
     try {
         let playlist = await PlayListModel.find({playlistName:playlistName});
@@ -23,9 +19,7 @@ const checkPlayList = async (playlistName)=>{
     } catch (error) {
         return error;
     }
-
 }
-
 exports.createPlaylist = async (req, res) => {
     const userEmail = req.params.email;
     const playlistName = req.params.playlistName;
@@ -38,9 +32,6 @@ exports.createPlaylist = async (req, res) => {
     //     return res.status(400).send("Playlist already exists");
     // }
     // else{
-
-
-
     var storage = multer.diskStorage({destination:function(req,file,cb){
         cb(null,'./images/')
     },filename:function(req,file,cb){
@@ -49,20 +40,17 @@ exports.createPlaylist = async (req, res) => {
     console.log(user);
     var upload = multer({storage:storage})
     try {
-        
         const uploadFile = upload.single('image');
         uploadFile(req, res, async (err) => {
             console.log(req.file);
             if (err) {
                 return res.status(500).send(err);
             }
-
             else {
                 if (req.file == "" || req.file == undefined) {
                     return res.status(400).send("Please upload an image");
                 }
-                else {
-                   
+                else {      
                     const playlist = new PlayListModel({
                         playlistName: playlistName,
                         userId: userId,
@@ -79,10 +67,7 @@ exports.createPlaylist = async (req, res) => {
         res.send({ message: error });
     } 
 }   
-
 // };
-
-
 exports.updatePlayList = async (req,res)=>{
     try {
         const email = req.body.email;
@@ -99,8 +84,7 @@ exports.updatePlayList = async (req,res)=>{
             // get song data for song  confirmation
             let song = await SongController.findSongByName(songTitle);         
             let songId = song._id;
-            let playlist1 = await checkPlayList(playlistName.toString()) ;
-         
+            let playlist1 = await checkPlayList(playlistName.toString()) ;        
             if(playlist1 == null || playlist1 == undefined || playlist1 == ""){
                 console.log("Playlist does not exist");
                 return res.status(400).send("Playlist does not exist");
@@ -126,7 +110,6 @@ exports.updatePlayList = async (req,res)=>{
         res.send("Unable to Update PlayList : "+error);
     }
 };
-
 exports.removePlaylist = async (req,res)=>{
     try {
         const Playlist = req.body.playlistId||req.body.playlist;
@@ -148,73 +131,60 @@ exports.removePlaylist = async (req,res)=>{
         res.send("Unable to delete PlayList : "+error);
     }
 };
-
 const shuffleData = async (data)=>
     {
         try {
         let user = await UserController.findUserByEmail(data);
         let userId = user._id;
-        console.log(userId);
+        // console.log(userId);
         let playlist = await PlayListModel.find({userId:userId},{_id:0,__v:0,createdAt:0,userId:0}).populate('song');
         // console.log(playlist.length);
         let playlistLength = playlist.length;
         let playlistDataArray = Array.from(playlist,(playlist)=>{
             return playlist.song;
         });
-        console.log(playlistDataArray);
-        
-
+        // console.log(playlistDataArray);
         let i,j,i1,j1;
         for(i=0;i<playlistDataArray.length;i++){
             for(j=0;j<playlistDataArray[i].length;j++){
-                let i1 = Math.floor(Math.random()*playlistDataArray.length);
-                j1 = Math.floor(Math.random()*playlistDataArray[i1].length);
-                let temp = playlistDataArray[i][j];
-                playlistDataArray[i][j] = playlistDataArray[i1][j1];
-                playlistDataArray[i1][j1] = temp;
+                    let i1 = Math.floor(Math.random()*playlistDataArray.length);
+                    j1 = Math.floor(Math.random()*playlistDataArray[i1].length);
+                    let temp = playlistDataArray[i][j];
+                    playlistDataArray[i][j] = playlistDataArray[i1][j1];
+                    playlistDataArray[i1][j1] = temp;
+                }   
             }
-          
-            }
-            console.log("\nSHUFFLED DATA\n");
-            console.log(playlistDataArray);
+            // console.log("\nSHUFFLED DATA\n");
+            // console.log(playlistDataArray);
             return playlistDataArray;
-
         } catch (error) {
             console.log(error);
         }
     };
-
 exports.displayPlaylist = async (req,res)=>{
     try {
-        let userEmail = req.params.email;
-        
+        let userEmail = req.params.email;  
         let user = await UserController.findUserByEmail(userEmail);
         let userId = user._id;
-        
-        let playlist = await PlayListModel.find({userId:userId}).populate('song');
+        let playlist = await PlayListModel.find({userId:userId},{__v:0,_id:0}).populate('song');
         if(!playlist){
             return res.status(400).send("No playlist found");
         }
         else{
-            console.log("\n====================\nDisplaying the Playlist data:\n======================== \n");
+            // console.log("\n====================\nDisplaying the Playlist data:\n======================== \n");
             let shuffledData = await shuffleData(userEmail.toString());
             let shuffleDataObject ={};
             shuffledData.forEach((v)=>{
                 let key = v[0];
                 let value = v[1];
-
                 shuffleDataObject[key] = value;
-                console.log(shuffleData);
+                // console.log(shuffleData);
             })
-
             // console.log(await shuffleData(userEmail.toString()));
             console.log("\n =================================== \n");
             return res.status(200).send(playlist+shuffleDataObject);
         }
-
     } catch (error) {
         res.send("Unable to display PlayList : "+error);
     }
-    
 };
-

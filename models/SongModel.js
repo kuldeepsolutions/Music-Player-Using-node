@@ -3,8 +3,7 @@ module.exports = mongoose.model('Song',new mongoose.Schema({
     title:{
         type:String,
         required:true
-    },
-    
+    },   
     size:{
         type:Number
     },

@@ -6,7 +6,6 @@ const multer = require('multer');
 const SongModel = require("../models/SongModel");
 
 var count = 0;
-
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, './songs/')
@@ -16,13 +15,10 @@ var storage = multer.diskStorage({
     }
 }
 );
-
 exports.uploadSong = async (req, res) => 
 {
-        var upload = multer({ storage: storage });
-        
+    var upload = multer({ storage: storage });      
     try {
-        
         const uploadFile = upload.single('song');
         uploadFile(req, res, async (err) => {
             if (err) {
@@ -43,8 +39,7 @@ exports.uploadSong = async (req, res) =>
                                 size:newSize
                             });
                             await song.save();
-                            return res.status(200).send("Song uploaded successfully");
-                        
+                            return res.status(200).send("Song uploaded successfully");               
                     }
                     else {
                         console.log("Song already exists");
@@ -59,7 +54,6 @@ exports.uploadSong = async (req, res) =>
         res.send({ message: error });
     }
 };
-
 const findSong = async (songName) => {
     try {
         count++;
@@ -75,12 +69,32 @@ const findSong = async (songName) => {
         return error;
     }
 };
+
+const shuffleSongs = async (songs) => {
+    try {
+        count++;
+        let shuffledSongs = [];
+        let random = Math.floor(Math.random() * songs.length);
+        shuffledSongs.push(songs[random]);
+        songs.splice(random, 1);
+        while (songs.length > 0) {
+            random = Math.floor(Math.random() * songs.length);
+            shuffledSongs.push(songs[random]);
+            songs.splice(random, 1);
+        }
+        return shuffledSongs;
+    } catch (error) {
+        console.log("Error in shuffling songs");
+    }
+};
 exports.songs = async (req, res) => {
     try {
         count++;
         console.log("trying to get all songs");
         const songs = await SongModel.find({}, { _id: 0, __v: 0, songPath: 0 });
-        res.json(songs);
+        let shuffledSongs = await shuffleSongs(songs);
+        // console.log(await shuffleSongs(songs));
+        res.json(shuffledSongs);
     } catch (error) {
         res.send("Error in finding songs"+error);
     }
@@ -119,7 +133,6 @@ exports.deleteSong = async (req, res) => {
         res.send({ message: error });
     }
 };
-
 exports.findSongByName = async (songName) => {
     try {
         count++;
