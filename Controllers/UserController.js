@@ -32,7 +32,7 @@ exports.createUser = async (req,res)=>{
             }
         }
     } catch (error) {
-        res.send({message:error});
+        res.send("Error: "+error);
     }
 }
 // Login User
@@ -218,7 +218,8 @@ exports.findUserByEmail = async (userEmail)=>{
         else{
             const user = await UserModel.findOne({email:userEmail},{_id:1,__v:0,password:0});
             if(!user){
-                console.log("User does not exist");
+                // console.log("User does not exist");
+                return;
             }
             else{
                 return user;

@@ -5,7 +5,12 @@ module.exports = mongoose.model("PlayList", new mongoose.Schema({
         required:true
     },
     songImage:{
-        type:String
+        type:String,
+        required:true
+    },
+    imagePath:{
+        type:String,
+        required:true
     },
     song:[{
         type:mongoose.Schema.Types.ObjectId,

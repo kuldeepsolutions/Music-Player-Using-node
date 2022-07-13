@@ -3,9 +3,9 @@ const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const multer = require('multer');
+const mp3Duration = require('mp3-duration');
 const SongModel = require("../models/SongModel");
-
-var count = 0;
+const UserController = require("./UserController");
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, './songs/')
@@ -29,17 +29,32 @@ exports.uploadSong = async (req, res) =>
                     return res.status(400).send("Please upload a Song");
                 }
                 else {
-                    let data = await findSong(req.file.originalname.toString());
+                    let data = await this.findSongByName(req.file.originalname.toString());
+                    console.log(data);
                     if (!data) {
-                       const size = req.file.size;
-                       const newSize = Number(size / (1024*1024)).toFixed(2);
-                            const song = new SongModel({
-                                title: req.file.originalname.toString(),
-                                songPath: req.file.path.toString(),
-                                size:newSize
-                            });
-                            await song.save();
-                            return res.status(200).send("Song uploaded successfully");               
+                        let User = await UserController.findUserByEmail(req.params.Email);
+                        if (!User) {
+                            return res.status(400).send("User does not exist");
+                        }
+                        let userId = User._id;
+                        let duration = await mp3Duration(req.file.path,(err,length)=>{
+                            return length;
+                        })
+                        let drn = (duration/60).toPrecision(2);
+                        console.log(drn);
+                        const size = req.file.size;
+                        const newSize = Number(size / (1024*1024)).toFixed(2);
+                                const song = new SongModel({
+                                    title: req.file.originalname.toString(),
+                                    songPath: req.file.path.toString(),
+                                    size:newSize,
+                                    usedTimes:0,
+                                    user:userId,
+                                    duration:drn
+
+                                });
+                                await song.save();
+                                return res.status(200).send("Song uploaded successfully");               
                     }
                     else {
                         console.log("Song already exists");
@@ -54,17 +69,25 @@ exports.uploadSong = async (req, res) =>
         res.send({ message: error });
     }
 };
-const findSong = async (songName) => {
+
+exports.findSong = async (req,res) => {
     try {
-        count++;
-        const song = await SongModel.findOne({ title: songName });
+        songName = req.params.song;
+        console.log("Find Song Method Called");
+        const song = await SongModel.findOneAndUpdate({ title: songName},{$set:{usedTimes:0}});
+        console.log(song);
+
+        song.usedTimes = Number(song.usedTimes) + 1;
+        song.save();
        if(!song){
-         console.log("Database Updated"); 
+         return res.status(400).send("Song does not exist");
        }else{
-            console.log(song.title,"\n",song.size);
-            return song;
+            // console.log(song.title,"\n",song.size);
+            return res.send(song);
          }
-    }
+        }
+           
+    
     catch (error) {
         return error;
     }
@@ -72,7 +95,7 @@ const findSong = async (songName) => {
 
 const shuffleSongs = async (songs) => {
     try {
-        count++;
+     
         let shuffledSongs = [];
         let random = Math.floor(Math.random() * songs.length);
         shuffledSongs.push(songs[random]);
@@ -89,19 +112,17 @@ const shuffleSongs = async (songs) => {
 };
 exports.songs = async (req, res) => {
     try {
-        count++;
         console.log("trying to get all songs");
-        const songs = await SongModel.find({}, { _id: 0, __v: 0, songPath: 0 });
+        const songs = await SongModel.find({}, { _id: 0, __v: 0, songPath: 0 }).populate('user');
         let shuffledSongs = await shuffleSongs(songs);
-        // console.log(await shuffleSongs(songs));
-        res.json(shuffledSongs);
+        res.json(shuffledSongs);     
     } catch (error) {
-        res.send("Error in finding songs"+error);
+        res.send("Error:-- "+error);
     }
 };
+
 exports.updateSong = async (req, res) => {
     try {
-        count++;
         const song = await SongModel.findOne({ song: req.params.song });
         if (!song) {
             return res.status(400).send("Song does not exist");
@@ -118,9 +139,10 @@ exports.updateSong = async (req, res) => {
     }
 };
 
+
 exports.deleteSong = async (req, res) => {
     try {
-        count++;
+      
         const song = await SongModel.findOne({ song: req.params.song });
         if (!song) {
             return res.status(400).send("Song does not exist");
@@ -130,13 +152,14 @@ exports.deleteSong = async (req, res) => {
             res.send("Song deleted successfully");
         }
     } catch (error) {
-        res.send({ message: error });
+        res.send("Error:-- "+error);
     }
 };
 exports.findSongByName = async (songName) => {
     try {
-        count++;
-        const song = await SongModel.findOne({ title: songName });
+        
+        const song = await SongModel.findOneAndUpdate({ title: songName , usedTimes: { $lt: 0 } }, { $inc: { usedTimes: 1 } }, { new: true });
+       
         if (!song) {
             console.log("Song does not exist");
         }

@@ -54,7 +54,9 @@ exports.createPlaylist = async (req, res) => {
                     const playlist = new PlayListModel({
                         playlistName: playlistName,
                         userId: userId,
-                        image: req.file.originalname
+                        songImage: req.file.originalname,
+                        imagePath: req.file.path
+
                     });
                    await playlist.save();
                     return res.status(200).send("Playlist created successfully");
@@ -63,6 +65,7 @@ exports.createPlaylist = async (req, res) => {
         }
         );
     }
+
     catch (error) {
         res.send({ message: error });
     } 
@@ -82,7 +85,7 @@ exports.updatePlayList = async (req,res)=>{
             let userDetail =  await UserController.findUserByEmail(email);
             let objectId = userDetail._id;          
             // get song data for song  confirmation
-            let song = await SongController.findSongByName(songTitle);         
+            let song = await SongController.findSong(songTitle.toString());         
             let songId = song._id;
             let playlist1 = await checkPlayList(playlistName.toString()) ;        
             if(playlist1 == null || playlist1 == undefined || playlist1 == ""){
@@ -164,9 +167,11 @@ const shuffleData = async (data)=>
 exports.displayPlaylist = async (req,res)=>{
     try {
         let userEmail = req.params.email;  
-        let user = await UserController.findUserByEmail(userEmail);
+        let user = await UserController.findUserByEmail(userEmail.toString());
+        console.log(user);
         let userId = user._id;
         let playlist = await PlayListModel.find({userId:userId},{__v:0,_id:0}).populate('song');
+        console.log(playlist);
         if(!playlist){
             return res.status(400).send("No playlist found");
         }
@@ -182,13 +187,16 @@ exports.displayPlaylist = async (req,res)=>{
             })
             // console.log(await shuffleData(userEmail.toString()));
             console.log("\n =================================== \n");
-            return res.status(200).send(playlist+shuffleDataObject);
+        //    res.download('./'+playlist[0].imagePath);
+            // console.log(image);
+            res.download('./'+playlist[0].imagePath);
+            res.send(playlist+res.download('./'+playlist[0].imagePath));
+            // return res.download('./'+playlist[0].imagePath)+ res.status(200).send ;
         }
     } catch (error) {
         res.send("Unable to display PlayList : "+error);
     }
 };
-// module.exports = checkPlayList;
 
 exports.getPlaylist = async (playlist)=>{
     try {

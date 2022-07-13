@@ -23,9 +23,10 @@ router.get('/users/getAll',user.getAllUsers);
 
 // for Songs
 router.get('/allSong',song.songs);
-router.post('/createSong',song.uploadSong);
+router.post('/createSong/:Email',song.uploadSong);
 router.post('/updateSong',song.updateSong);
 router.post('/deleteSong',song.deleteSong);
+router.post('/findSong/:song',song.findSong);
 
 
 // for Playlists
